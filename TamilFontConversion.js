@@ -335,7 +335,6 @@ unic2stmzh['ஹ'+'\u0bcc']='\uf0d8'+'\uf0c7'+'\uf065';
 
 function convertTamilFont(string){
     var lines = string.split(/\r?\n/);
-    console.log(lines);
     var res = lines.map(convertSingleLine);
     return(res.join(' \n<br>'));
 }
@@ -349,7 +348,6 @@ function convertSingleLine(line){
 }
 
 function convertSingleEntity(ent){
-    console.log(ent)
     if (unic2stmzh.hasOwnProperty(ent)){
         return unic2stmzh[ent];
     }
