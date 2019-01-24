@@ -51,7 +51,7 @@ class Converter extends React.Component{
         return(
             <div className="container">
                 <div className="markdown">
-                    <textarea id="input-markdown"  rows="30" cols="60" onChange={this.updateText}>{this.state.text}
+                    <textarea id="input-markdown"  rows="30" cols="60" onChange={this.updateText} value={this.state.text}>
                     </textarea>
                 </div>
                 <div className="preview">
