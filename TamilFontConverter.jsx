@@ -50,12 +50,13 @@ class Converter extends React.Component{
     render(){
         return(
             <div className="container">
-                <div className="markdown">
-                    <textarea id="input-markdown"  rows="30" cols="60" onChange={this.updateText} value={this.state.text}>
+                <div className="unicode-text">
+                    <textarea id="input-unicode"  rows="30" cols="60" onChange={this.updateText} value={this.state.text}>
                     </textarea>
                 </div>
                 <div className="preview">
-                    <div dangerouslySetInnerHTML={{__html: this.getPreview()}}>
+                <button class='btn btn-primary' data-clipboard-target='#output' title='Copy Text in Sentamizh Font' data-placement='top'> Copy to Clipboard </button>
+                    <div id='output' dangerouslySetInnerHTML={{__html: this.getPreview()}}>
                     </div>
                 </div>
             </div>
@@ -64,3 +65,6 @@ class Converter extends React.Component{
     }
 }
 ReactDOM.render(<Converter /> , document.querySelector('#root')); 
+    $(document).ready(function(){
+    new ClipboardJS('.btn');
+    });
