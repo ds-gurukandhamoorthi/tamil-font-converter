@@ -8,6 +8,7 @@ class Converter extends React.Component{
             '\n'+
             'அஆஇஈஉஊஎஏஐஒஓஔஃ' + '\n'+
             'ஸ்ரீ' +
+            'க்ஷ'+
             'க்ஷ்' +
             'க்ஷெக்ஷேக்ஷொக்ஷோக்ஷௌ' +
             'க்ஷக்ஷா' +
@@ -44,18 +45,19 @@ class Converter extends React.Component{
 
     }
     getPreview(){
-        return convertTamilFont(this.state.text);
+        parserInstance.input=UnicodeToStmzhLexer.tokenize(this.state.text).tokens;
+        return parserInstance.text();
     }
 
     render(){
         return(
             <div className="container">
                 <div className="unicode-text">
-                    <textarea id="input-unicode"  rows="30" cols="60" onChange={this.updateText} value={this.state.text}>
+                    <textarea className='form-control' id="input-unicode"  rows="30" cols="60" onChange={this.updateText} value={this.state.text}>
                     </textarea>
                 </div>
                 <div className="preview">
-                <button class='btn btn-primary' data-clipboard-target='#output' title='Copy Text in Sentamizh Font' data-placement='top'> Copy to Clipboard </button>
+                <button className='btn btn-primary' data-clipboard-target='#output' title='Copy Text in Sentamizh Font' data-placement='top'> Copy to Clipboard </button>
                     <div id='output' dangerouslySetInnerHTML={{__html: this.getPreview()}}>
                     </div>
                 </div>
