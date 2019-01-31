@@ -47,7 +47,6 @@ console.assert(uConsonantsWithout2Excep.length == stmzhUNedilConsonants.length, 
 const unic2stmzhUNedil = new Map(R.zipWith((u,s)=> [u+'\u0bc2',s], uConsonantsWithout2Excep, stmzhUNedilConsonants))
     .set('க'+'\u0bcd'+ 'ஷ'+ '\u0bc2','\uf066');
 
-// const stmzhANedil = '\uf056';
 const markTransforms = {
     '\u0bbe': c => unic2stmzhConsonants.get(c) + '\uf056', // A nedil
 
@@ -58,7 +57,16 @@ const markTransforms = {
     '\u0bca': c => '\uf0d8' + unic2stmzhConsonants.get(c) + '\uf056',  // O kuril
     '\u0bcb': c => '\uf0bc' + unic2stmzhConsonants.get(c) + '\uf056',  // O nedil
     '\u0bcc': c => '\uf0d8' + unic2stmzhConsonants.get(c) + '\uf065',  // O nedil
-}
+};
+
+//Calculate table/hash to speed up
+const uComposedChars = R.map(R.join(''), R.xprod(uConsonants, R.keys(markTransforms)));
+const stmzhComposedChars = R.map(R.ap(R.values(markTransforms)), uConsonants).flat();
+
+const uComposedKsha = R.map(R.join(''), R.xprod(['க்ஷ'], R.keys(markTransforms))); 
+const stmzhComposedKsha = R.ap(R.values(markTransforms), ['க்ஷ'])
+
+const unic2stmzhComposedChars = new Map(R.zipWith((u,s)=> [u ,s], R.concat(uComposedChars, uComposedKsha) , R.concat(stmzhComposedChars, stmzhComposedKsha)));
 
 
 
@@ -131,7 +139,7 @@ class UnicodeToStmzhConverter extends Parser{
                 {ALT: () => $.CONSUME(FollowingMark)},
                 {ALT: () => $.CONSUME(PrecedingAndFollowingMark)},
             ]);
-            return(markTransforms[mark.image](charac.image));
+            return(unic2stmzhComposedChars.get(charac.image+mark.image));
         });
         $.RULE('notTranslatable', ()=>{ //not Translatable meaning : not having an equivalent encoding in the target font
             let characs = $.OR([
