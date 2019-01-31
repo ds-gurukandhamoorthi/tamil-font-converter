@@ -74,19 +74,27 @@ const unic2stmzhComposedChars = new Map(R.zipWith((u,s)=> [u ,s], R.concat(uComp
 const unic2stmzhRidingEntities = new Map([...unic2stmzhDots, ...unic2stmzhIKuril, ...unic2stmzhINedil, ...unic2stmzhUKuril, ...unic2stmzhUNedil]);
 
 const All = createToken({name: 'All', pattern:/./});
-const Sri = createToken({name: 'Sri', pattern:/ஸ்ரீ/});
-const Vowel = createToken({name: 'Vowel', pattern:/[அஆஇஈஉஊஎஏஐஒஓஔஃ]/});
-const Consonant = createToken({name: 'Consonant', pattern:/க்ஷ|[கஙசஞடணதநபமயரலவழளறனஷஜஸஹ]/});
-const RidingMark = createToken({name: 'RidingMark', pattern:/\u0bcd|\u0bbf|\u0bc0|\u0bc1|\u0bc2/}); //Aka Combining Mark in Unicode: pulli_ta (A kuril), I kuril, I nedil, U kuril, U nedil
-const PrecedingMark = createToken({name: 'PrecedingMark', pattern: /\u0bc6|\u0bc7|\u0bc8/}); // E kuil E nedil AI
-const FollowingMark = createToken({name: 'FollowingMark', pattern:/\u0bbe/}); // A nedil
-const PrecedingAndFollowingMark = createToken({name: 'PrecedingAndFollowingMark', pattern:/\u0bca|\u0bcb|\u0bcc/}); //O kuril, O nedil, AU
+
+const Atomic = createToken({name: 'Atomic', pattern: Lexer.NA });
+
+const Sri = createToken({name: 'Sri', pattern:/ஸ்ரீ/, categories:[Atomic]});
+const Vowel = createToken({name: 'Vowel', pattern:/[அஆஇஈஉஊஎஏஐஒஓஔஃ]/, categories:[Atomic]});
+const Consonant = createToken({name: 'Consonant', pattern:/க்ஷ|[கஙசஞடணதநபமயரலவழளறனஷஜஸஹ]/, categories:[Atomic]});
+
+const Mark = createToken({name: 'Mark', pattern: Lexer.NA });
+
+const RidingMark = createToken({name: 'RidingMark', pattern:/\u0bcd|\u0bbf|\u0bc0|\u0bc1|\u0bc2/, categories:[Mark]}); //Aka Combining Mark in Unicode: pulli_ta (A kuril), I kuril, I nedil, U kuril, U nedil
+
+const NonRidingMark = createToken({name: 'NonRidingMark', pattern: Lexer.NA }); //Any mark that precedes, follows or does both. (But doesn't modify the form of character it marks)
+const PrecedingMark = createToken({name: 'PrecedingMark', pattern: /\u0bc6|\u0bc7|\u0bc8/, categories: [NonRidingMark, Mark]}); // E kuil E nedil AI
+const FollowingMark = createToken({name: 'FollowingMark', pattern:/\u0bbe/, categories: [NonRidingMark, Mark]}); // A nedil
+const PrecedingAndFollowingMark = createToken({name: 'PrecedingAndFollowingMark', pattern:/\u0bca|\u0bcb|\u0bcc/, categories: [NonRidingMark, Mark]}); //O kuril, O nedil, AU
 
 const WhiteSpace = createToken({name: 'WhiteSpace', pattern:/\s+/});
 
 const newLine = createToken({name: 'newLine', pattern:/\n/});
 
-const allTokens = [newLine, WhiteSpace, Sri, Vowel, RidingMark, PrecedingMark, FollowingMark, PrecedingAndFollowingMark ,Consonant, All];
+const allTokens = [newLine, WhiteSpace, Sri, Vowel, RidingMark, PrecedingMark, FollowingMark, PrecedingAndFollowingMark ,Consonant, All, NonRidingMark, Mark, Atomic];
 
 const UnicodeToStmzhLexer = new Lexer(allTokens);
 
@@ -99,7 +107,6 @@ class UnicodeToStmzhConverter extends Parser{
             $.MANY(()=>{
                 let charac = $.OR([
                     {ALT: ()  => $.SUBRULE($.composedEntity)},
-                    // {ALT: () => $.SUBRULE($.specialComposedEntity)},
                     {ALT: ()  => $.SUBRULE($.separateEntity)},
                     {ALT: ()  => $.SUBRULE($.lineBreak)},
                     {ALT: ()  => $.SUBRULE($.notTranslatable)},
@@ -114,6 +121,7 @@ class UnicodeToStmzhConverter extends Parser{
                 {ALT: () => $.CONSUME(Consonant)},
                 {ALT: () => $.CONSUME(Sri)},
             ]);
+            // let charac = $.CONSUME(Atomic); //FIXME: Somehow using 'categories doesn't function here'
             let mark;
             $.OPTION(()=>{
                 mark = $.CONSUME(RidingMark);
@@ -134,19 +142,12 @@ class UnicodeToStmzhConverter extends Parser{
         });
         $.RULE('composedEntity', ()=>{ //FIXME
             let charac = $.CONSUME(Consonant);
-            let mark = $.OR([
-                {ALT: () => $.CONSUME(PrecedingMark)},
-                {ALT: () => $.CONSUME(FollowingMark)},
-                {ALT: () => $.CONSUME(PrecedingAndFollowingMark)},
-            ]);
+            let mark = $.CONSUME(NonRidingMark);
             return(unic2stmzhComposedChars.get(charac.image+mark.image));
         });
         $.RULE('notTranslatable', ()=>{ //not Translatable meaning : not having an equivalent encoding in the target font
             let characs = $.OR([
-                {ALT: () => $.CONSUME(RidingMark)}, //When along: dangling Mark
-                {ALT: () => $.CONSUME(PrecedingMark)}, //When along: dangling Mark
-                {ALT: () => $.CONSUME(FollowingMark)}, //When along: dangling Mark
-                {ALT: () => $.CONSUME(PrecedingAndFollowingMark)}, //When along: dangling Mark
+                {ALT: () => $.CONSUME(Mark)}, //When alone: dangling Mark
                 {ALT: () => $.CONSUME(WhiteSpace)},
                 {ALT: () => $.CONSUME(All)},
             ]);
