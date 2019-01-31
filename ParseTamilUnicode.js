@@ -143,6 +143,10 @@ class UnicodeToStmzhConverter extends Parser{
         });
         $.RULE('notTranslatable', ()=>{ //not Translatable meaning : not having an equivalent encoding in the target font
             let characs = $.OR([
+                {ALT: () => $.CONSUME(RidingMark)}, //When along: dangling Mark
+                {ALT: () => $.CONSUME(PrecedingMark)}, //When along: dangling Mark
+                {ALT: () => $.CONSUME(FollowingMark)}, //When along: dangling Mark
+                {ALT: () => $.CONSUME(PrecedingAndFollowingMark)}, //When along: dangling Mark
                 {ALT: () => $.CONSUME(WhiteSpace)},
                 {ALT: () => $.CONSUME(All)},
             ]);
