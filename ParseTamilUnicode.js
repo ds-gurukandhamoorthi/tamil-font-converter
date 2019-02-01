@@ -75,11 +75,11 @@ const unic2stmzhRidingEntities = new Map([...unic2stmzhDots, ...unic2stmzhIKuril
 
 const All = createToken({name: 'All', pattern:/./});
 
-const Atomic = createToken({name: 'Atomic', pattern: Lexer.NA });
+const NotMarkable = createToken({name: 'NotMarkable', pattern: Lexer.NA });
 
-const Sri = createToken({name: 'Sri', pattern:/ஸ்ரீ/, categories:[Atomic]});
-const Vowel = createToken({name: 'Vowel', pattern:/[அஆஇஈஉஊஎஏஐஒஓஔஃ]/, categories:[Atomic]});
-const Consonant = createToken({name: 'Consonant', pattern:/க்ஷ|[கஙசஞடணதநபமயரலவழளறனஷஜஸஹ]/, categories:[Atomic]});
+const Sri = createToken({name: 'Sri', pattern:/ஸ்ரீ/, categories:[NotMarkable]});
+const Vowel = createToken({name: 'Vowel', pattern:/[அஆஇஈஉஊஎஏஐஒஓஔஃ]/, categories:[NotMarkable]});
+const Consonant = createToken({name: 'Consonant', pattern:/க்ஷ|[கஙசஞடணதநபமயரலவழளறனஷஜஸஹ]/});
 
 const Mark = createToken({name: 'Mark', pattern: Lexer.NA });
 
@@ -94,7 +94,7 @@ const WhiteSpace = createToken({name: 'WhiteSpace', pattern:/\s+/});
 
 const newLine = createToken({name: 'newLine', pattern:/\n/});
 
-const allTokens = [newLine, WhiteSpace, Sri, Vowel, RidingMark, PrecedingMark, FollowingMark, PrecedingAndFollowingMark ,Consonant, All, NonRidingMark, Mark, Atomic];
+const allTokens = [newLine, WhiteSpace, Sri, Vowel, RidingMark, PrecedingMark, FollowingMark, PrecedingAndFollowingMark ,Consonant, All, NonRidingMark, Mark, NotMarkable];
 
 const UnicodeToStmzhLexer = new Lexer(allTokens);
 
@@ -116,16 +116,18 @@ class UnicodeToStmzhConverter extends Parser{
             return(res);
         });
         $.RULE('separateEntity', ()=>{
-            let charac= $.OR([
-                {ALT: () => $.CONSUME(Vowel)},
-                {ALT: () => $.CONSUME(Consonant)},
-                {ALT: () => $.CONSUME(Sri)},
-            ]);
-            // let charac = $.CONSUME(Atomic); //FIXME: Somehow using 'categories doesn't function here'
             let mark;
-            $.OPTION(()=>{
-                mark = $.CONSUME(RidingMark);
-            });
+            let charac= $.OR([
+                {ALT: () => $.CONSUME(NotMarkable)},
+                {ALT: () => {
+                    let c = $.CONSUME(Consonant);
+                    $.OPTION(()=>{
+                        mark = $.CONSUME(RidingMark); //TODO: multiple marks on the same letter (Possibly written to illustrate grammar : k + E kuril + E kuril = k + E Nedil. கெெ
+                    });
+                    return c;
+                }
+                },
+            ]);
             if (mark == null){
                 if (unic2stmzhEntities.has(charac.image)){
                     return(unic2stmzhEntities.get(charac.image));
